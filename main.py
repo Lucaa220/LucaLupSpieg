@@ -20,50 +20,42 @@ logger = logging.getLogger(__name__)
 
 # Leggi le variabili d'ambiente
 token = os.getenv("TOKEN", "").strip()
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://lucalupspieg.onrender.com/webhook").strip()
+# Costruisci il webhook URL in modo che punti al percorso /<token>
+base_url = os.getenv("WEBHOOK_URL", "https://lucalupspieg.onrender.com").strip()
+WEBHOOK_URL = f"{base_url}/{token}"
 PORT = int(os.getenv("PORT", 8000))
 
 # Funzione di health check per Uptime Robot
 async def health_handler(request: web.Request) -> web.Response:
-    return web.Response(text="Bot spiegazione lupus attivo!")
-
-# Server web per l'health check
-async def start_health_server() -> None:
-    app = web.Application()
-    app.router.add_get('/health', health_handler)
-    app.router.add_get('/', health_handler)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', PORT)
-    await site.start()
-    logger.info(f"Server health attivo sulla porta {PORT}")
-    while True:
-        await asyncio.sleep(3600)
+    return web.Response(text="Bot Tombola2_Bot attivo!")
 
 # Funzione principale per il bot
 async def main() -> None:
     logger.info("Configurazione del bot...")
     application = ApplicationBuilder().token(token).build()
 
-    # Registrazione degli handler (ordini logici: prima i comandi, poi gli altri)
+    # Registrazione degli handler (prima i comandi, poi gli altri)
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
     logger.info("Impostazione del webhook...")
-    # Imposta il webhook: Telegram invierà gli aggiornamenti a WEBHOOK_URL
     await application.bot.set_webhook(url=WEBHOOK_URL)
     logger.info(f"Webhook impostato su {WEBHOOK_URL}")
+
+    # Crea un'unica applicazione aiohttp che gestisce sia il webhook sia l'health check
+    app = web.Application()
+    # Aggiungi la route per l'health check
+    app.router.add_get('/health', health_handler)
+    app.router.add_get('/', health_handler)
     
-    # Avvia in parallelo il webhook del bot e il server web per l'health check
-    await asyncio.gather(
-        application.run_webhook(
-            listen="0.0.0.0",
-            port=PORT,
-            url_path=token,
-            webhook_url=WEBHOOK_URL
-        ),
-        start_health_server()
+    # Avvia il server in modalità webhook usando l'applicazione integrata
+    await application.run_webhook(
+         listen="0.0.0.0",
+         port=PORT,
+         url_path=token,
+         webhook_url=WEBHOOK_URL,
+         app=app
     )
 
 if __name__ == "__main__":
