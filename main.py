@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 from aiohttp import web
+from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 import nest_asyncio
 from dotenv import load_dotenv
@@ -42,14 +43,18 @@ async def main() -> None:
     await application.bot.set_webhook(url=WEBHOOK_URL)
     logger.info(f"Webhook impostato su {WEBHOOK_URL}")
 
-    # Ottieni l'handler per il webhook dal bot
-    webhook_handler = application.webhook_handler()
+    # Definizione di un handler personalizzato per il webhook:
+    async def handle_webhook(request: web.Request) -> web.Response:
+        data = await request.json()
+        update = Update.de_json(data, application.bot)
+        await application.process_update(update)
+        return web.Response(text="OK")
 
     # Crea l'app aiohttp e aggiungi le route:
     # - La route POST per gestire gli aggiornamenti dal webhook
     # - Le route GET per l'health check
     app = web.Application()
-    app.router.add_post(f"/{token}", webhook_handler)
+    app.router.add_post(f"/{token}", handle_webhook)
     app.router.add_get('/health', health_handler)
     app.router.add_get('/', health_handler)
 
