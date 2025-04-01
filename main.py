@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Leggi le variabili d'ambiente
 token = os.getenv("TOKEN", "").strip()
-# Costruisci il webhook URL con un endpoint fisso /webhook
+# Costruisci il webhook URL con endpoint fisso /webhook
 base_url = os.getenv("WEBHOOK_URL", "https://lucalupspieg.onrender.com").strip()
 WEBHOOK_URL = f"{base_url}/webhook"
 PORT = int(os.getenv("PORT", 8000))
@@ -43,7 +43,7 @@ async def main() -> None:
     await application.bot.set_webhook(url=WEBHOOK_URL)
     logger.info(f"Webhook impostato su {WEBHOOK_URL}")
 
-    # Definizione di un handler personalizzato per il webhook:
+    # Definizione di un handler personalizzato per il webhook (gestisce solo POST):
     async def handle_webhook(request: web.Request) -> web.Response:
         data = await request.json()
         update = Update.de_json(data, application.bot)
@@ -51,10 +51,12 @@ async def main() -> None:
         return web.Response(text="OK")
 
     # Crea l'app aiohttp e aggiungi le route:
-    # - POST per gestire gli aggiornamenti dal webhook
-    # - GET per l'health check
     app = web.Application()
+    # Route POST per gestire gli aggiornamenti
     app.router.add_post("/webhook", handle_webhook)
+    # Route GET per fornire una risposta informativa sull'endpoint webhook
+    app.router.add_get("/webhook", lambda request: web.Response(text="Endpoint webhook: usa il metodo POST."))
+    # Route per l'health check
     app.router.add_get('/health', health_handler)
     app.router.add_get('/', health_handler)
 
@@ -86,3 +88,4 @@ if __name__ == "__main__":
         logger.error(f"Si è verificato un errore: {e}")
     finally:
         loop.close()
+
