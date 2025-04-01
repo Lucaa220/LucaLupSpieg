@@ -50,16 +50,20 @@ async def main() -> None:
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    logger.info("Avvio del bot in modalità polling...")
+    logger.info("Impostazione del webhook...")
+    # Imposta il webhook: Telegram invierà gli aggiornamenti a WEBHOOK_URL
+    await application.bot.set_webhook(url=WEBHOOK_URL)
+    logger.info(f"Webhook impostato su {WEBHOOK_URL}")
     
-    # Se usi il webhook, scommenta le seguenti righe (per polling non servono)
-    # await application.bot.set_webhook(url=WEBHOOK_URL)
-    # logger.info(f"Webhook impostato su {WEBHOOK_URL}")
-    
-    # Avvia in parallelo il polling del bot e il server web per l'health check
+    # Avvia in parallelo il webhook del bot e il server web per l'health check
     await asyncio.gather(
-        application.run_polling(),  # Polling per ricevere aggiornamenti dal bot
-        start_health_server()       # Server per rispondere alle richieste GET (per Uptime Robot)
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=PORT,
+            url_path=token,
+            webhook_url=WEBHOOK_URL
+        ),
+        start_health_server()
     )
 
 if __name__ == "__main__":
