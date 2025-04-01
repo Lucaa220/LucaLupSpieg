@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Leggi le variabili d'ambiente
 token = os.getenv("TOKEN", "").strip()
-# Costruisci il webhook URL in modo che punti al percorso /<token>
+# Costruisci il webhook URL con un endpoint fisso /webhook
 base_url = os.getenv("WEBHOOK_URL", "https://lucalupspieg.onrender.com").strip()
 WEBHOOK_URL = f"{base_url}/webhook"
 PORT = int(os.getenv("PORT", 8000))
@@ -51,10 +51,10 @@ async def main() -> None:
         return web.Response(text="OK")
 
     # Crea l'app aiohttp e aggiungi le route:
-    # - La route POST per gestire gli aggiornamenti dal webhook
-    # - Le route GET per l'health check
+    # - POST per gestire gli aggiornamenti dal webhook
+    # - GET per l'health check
     app = web.Application()
-    app.router.add_post(f"/webhook", handle_webhook)
+    app.router.add_post("/webhook", handle_webhook)
     app.router.add_get('/health', health_handler)
     app.router.add_get('/', health_handler)
 
