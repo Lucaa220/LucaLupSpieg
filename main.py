@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 token = os.getenv("TOKEN", "").strip()
 # Costruisci il webhook URL in modo che punti al percorso /<token>
 base_url = os.getenv("WEBHOOK_URL", "https://lucalupspieg.onrender.com").strip()
-WEBHOOK_URL = f"{base_url}/{token}"
+WEBHOOK_URL = f"{base_url}/webhook"
 PORT = int(os.getenv("PORT", 8000))
 
 # Funzione di health check per Uptime Robot
@@ -54,7 +54,7 @@ async def main() -> None:
     # - La route POST per gestire gli aggiornamenti dal webhook
     # - Le route GET per l'health check
     app = web.Application()
-    app.router.add_post(f"/{token}", handle_webhook)
+    app.router.add_post(f"/webhook", handle_webhook)
     app.router.add_get('/health', health_handler)
     app.router.add_get('/', health_handler)
 
