@@ -20,12 +20,12 @@ logger = logging.getLogger(__name__)
 
 # Leggi le variabili d'ambiente
 token = os.getenv("TOKEN", "").strip()
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://tuo-dominio.onrender.com/webhook").strip()
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://lucalupspieg.onrender.com/webhook").strip()
 PORT = int(os.getenv("PORT", 8000))
 
 # Funzione di health check per Uptime Robot
 async def health_handler(request: web.Request) -> web.Response:
-    return web.Response(text="Bot Tombola2_Bot attivo!")
+    return web.Response(text="Bot spiegazione lupus attivo!")
 
 # Server web per l'health check
 async def start_health_server() -> None:
